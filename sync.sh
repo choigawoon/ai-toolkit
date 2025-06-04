@@ -1,23 +1,23 @@
 #!/bin/bash
 
-# ComfyUI 모델 동기화 스크립트
+# AI 툴킷 동기화 스크립트
 # 사용법: 
-#   ./sync.sh --push [--host 사용자명@원격IP] [--port 포트번호] : 로컬에서 원격 서버로 모델 폴더 전송
-#   ./sync.sh --pull [--host 사용자명@원격IP] [--port 포트번호] : 원격 서버에서 로컬로 모델 폴더 가져오기
+#   ./sync.sh --push [--host 사용자명@원격IP] [--port 포트번호] : 로컬에서 원격 서버로 파일/폴더 전송
+#   ./sync.sh --pull [--host 사용자명@원격IP] [--port 포트번호] : 원격 서버에서 로컬로 파일/폴더 가져오기
 
 # 기본 설정 변수
 REMOTE_HOST=""
 REMOTE_PORT=""
-REMOTE_PATH="~/Desktop/ComfyUI/"
-LOCAL_PATH="models"
+REMOTE_PATH="~/Desktop/ai-toolkit/"
+LOCAL_ITEMS=("datasets" "output" "aitk._db.db")
 ACTION=""
 
 # 도움말 함수
 show_help() {
   echo "사용법: $0 [옵션]"
   echo "옵션:"
-  echo "  --push                    로컬에서 원격 서버로 모델 폴더 전송"
-  echo "  --pull                    원격 서버에서 로컬로 모델 폴더 가져오기"
+  echo "  --push                    로컬에서 원격 서버로 파일/폴더 전송"
+  echo "  --pull                    원격 서버에서 로컬로 파일/폴더 가져오기"
   echo "  --host 사용자명@원격IP     원격 호스트 정보 (예: user@192.168.1.100)"
   echo "  --port 포트번호            SSH 포트 번호 (기본값: 22)"
   echo "  --help                    도움말 표시"
@@ -78,15 +78,21 @@ fi
 # 명령어 처리
 case "$ACTION" in
   push)
-    echo "로컬에서 원격 서버로 모델 폴더 전송 중..."
+    echo "로컬에서 원격 서버로 파일/폴더 전송 중..."
     echo "호스트: $REMOTE_HOST, 포트: $REMOTE_PORT"
-    rsync -avh --progress -e "ssh -p $REMOTE_PORT" $LOCAL_PATH $REMOTE_HOST:$REMOTE_PATH
+    for item in "${LOCAL_ITEMS[@]}"; do
+      echo "전송 중: $item"
+      rsync -avh --progress -e "ssh -p $REMOTE_PORT" "$item" "$REMOTE_HOST:$REMOTE_PATH"
+    done
     echo "전송 완료!"
     ;;
   pull)
-    echo "원격 서버에서 로컬로 모델 폴더 가져오는 중..."
+    echo "원격 서버에서 로컬로 파일/폴더 가져오는 중..."
     echo "호스트: $REMOTE_HOST, 포트: $REMOTE_PORT"
-    rsync -avh --progress -e "ssh -p $REMOTE_PORT" $REMOTE_HOST:$REMOTE_PATH$LOCAL_PATH .
+    for item in "${LOCAL_ITEMS[@]}"; do
+      echo "가져오는 중: $item"
+      rsync -avh --progress -e "ssh -p $REMOTE_PORT" "$REMOTE_HOST:$REMOTE_PATH$item" .
+    done
     echo "가져오기 완료!"
     ;;
   *)
